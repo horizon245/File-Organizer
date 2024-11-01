@@ -1,0 +1,53 @@
+import unittest
+import os
+from file_organizer import retrieve_files, categorize_files, move_files
+
+class TestFileOrganizer(unittest.TestCase):
+
+    def test_retrieve_files(self):
+        test_dir = "test_files"
+        os.makedirs(test_dir, exist_ok=True)
+        with open(os.path.join(test_dir, "test.txt"), 'w') as f:
+            f.write("test content")
+        with open(os.path.join(test_dir, "test.jpg"), 'w') as f:
+            f.write("fake image content")
+
+        files = retrieve_files(test_dir)
+        self.assertEqual(len(files), 2)
+        self.assertIn(os.path.join(test_dir, "test.txt"), files)
+        self.assertIn(os.path.join(test_dir, "test.jpg"), files)
+
+        for file in files:
+            os.remove(file)
+        os.rmdir(test_dir)
+
+    def test_categorize_files(self):
+        files = ["test.txt", "image.jpg", "video.mp4"]
+
+        categorized = categorize_files(files)
+        self.assertIn("Documents", categorized)
+        self.assertIn("Pictures", categorized)  
+        self.assertIn("Videos", categorized)
+        self.assertIn("test.txt", categorized["Documents"])
+        self.assertIn("image.jpg", categorized["Pictures"])
+        self.assertIn("video.mp4", categorized["Videos"])
+
+    def test_move_files(self):
+        test_dir = "test_files"
+        os.makedirs(test_dir, exist_ok=True)
+        with open(os.path.join(test_dir, "test.txt"), 'w') as f:
+            f.write("test content")
+
+        categorized = {"Documents": [os.path.join(test_dir, "test.txt")]}
+
+        try:
+            move_files(categorized, test_dir)
+            self.assertTrue(os.path.exists(os.path.join(test_dir, "Documents", "test.txt")))
+        finally:
+            # Cleanup after the test
+            os.remove(os.path.join(test_dir, "Documents", "test.txt"))
+            os.rmdir(os.path.join(test_dir, "Documents"))
+            os.rmdir(test_dir)
+
+if __name__ == "__main__":
+    unittest.main()
